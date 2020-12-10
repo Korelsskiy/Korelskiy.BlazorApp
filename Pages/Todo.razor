@@ -1,0 +1,88 @@
+﻿@inject Korelskiy.BlazorApp.Data.Repository.IRepository repository;
+
+@page "/todo"
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col">
+            <h2 class="text-center">Сделать (@todos.Count(item => !item.IsDone))</h2>
+
+            <table class="table table-striped">
+                <thead class="table-dark">
+                    <tr>
+                        <th scope="col">Title</th>
+                        <th scope="col">Is Done</th>
+                        <th scope="col"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in todos)
+                    {
+                        <tr>
+                            <td>
+                                <div style="@(item.IsDone ? "color: green; text-decoration: line-through;" : "color: red")">
+                                    @item.Title
+                                </div>
+                            </td>
+                            <td>
+                                @if (!item.IsDone)
+                                {
+                                    <input type="checkbox" value="item.IsDone" @onchange="(() => StatusChanger(item))" />
+                                }
+                                else
+                                {
+                                    <input type="checkbox" checked value="item.IsDone" @onchange="(() => StatusChanger(item))" />
+                                }
+                            </td>
+                            <td>
+                                <button class="btn btn-danger" @onclick="(() => DeleteTodo(item.Id))">Delete</button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+
+            <div class="row">
+                <div class="col">
+                    <input class="form-control" placeholder="Введите задание" @bind="newTodo"/>
+                </div>
+
+                <div class="col" @onclick="AddTodo">
+                    <button class="btn btn-success">Add todo</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private IEnumerable<TodoItem> todos = new List<TodoItem>();
+
+    protected override void OnInitialized()
+    {
+        todos = repository.GetAllItems();
+    }
+
+    private string newTodo;
+
+    private void AddTodo()
+    {
+        if (!string.IsNullOrWhiteSpace(newTodo))
+        {
+            repository.AddTodo(newTodo);
+
+            newTodo = string.Empty;
+        }
+    }
+
+    private void DeleteTodo(int deletedItem)
+    {
+        repository.DeleteItem(deletedItem);
+    }
+
+    private void StatusChanger(TodoItem chengedItem)
+    {
+        chengedItem.IsDone = !chengedItem.IsDone;
+        repository.ValueChanged(chengedItem);
+    }
+}
